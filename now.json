@@ -1,0 +1,9 @@
+{
+  "env": {
+    "GMAIL_USER": "@gmail-user",
+    "GMAIL_PASS": "@gmail-pass",
+    "LND_CERT": "@lnd-cert",
+    "LND_MACAROON": "@lnd-macaroon",
+    "LND_SOCKET": "@lnd-socket"
+  }
+}
