@@ -12,20 +12,26 @@ export default async (req, res) => {
     return res.end(JSON.stringify(test))
   }
 
-  const { LND_CERT, LND_MACAROON, LND_SOCKET, MIN_PAYMENT } = process.env
-  const { lnd } = lnService.authenticatedLndGrpc({
-    cert: LND_CERT,
-    macaroon: LND_MACAROON,
-    socket: LND_SOCKET,
-  })
-  
-  const {request, id, tokens} = await lnService.createInvoice({
-        lnd: lnd,
-        description:'test invoice',
-        tokens: MIN_PAYMENT || 1000,
-        expires_at: Date.now() + 2000
-      })
-  res.end(JSON.stringify({request, id, amount: tokens}))
-  res.setHeader('Content-Type', 'application/json')
-  res.statusCode = 200
+  try {
+    const { LND_CERT, LND_MACAROON, LND_SOCKET, MIN_PAYMENT } = process.env
+    const { lnd } = lnService.authenticatedLndGrpc({
+      cert: LND_CERT,
+      macaroon: LND_MACAROON,
+      socket: LND_SOCKET,
+    })
+
+    const {request, id, tokens} = await lnService.createInvoice({
+          lnd: lnd,
+          description:'test invoice',
+          tokens: MIN_PAYMENT || 1000,
+          expires_at: Date.now() + 2000
+        })
+    res.setHeader('Content-Type', 'application/json')
+    res.statusCode = 200
+    res.end(JSON.stringify({request, id, amount: tokens}))
+  } catch (e) {
+    res.statusCode = 500
+    console.error('err:', e)
+    res.end(JSON.stringify({ err: { message: 'problem connecting to lnd service '}}))
+  }
 }

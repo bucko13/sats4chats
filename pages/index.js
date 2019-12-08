@@ -83,8 +83,6 @@ const Home = () => {
         form['formPreimage'].setCustomValidity('Invalid hash')
         setPreimageValid(false)
       }
-      
-
     } catch (e) {
       form['formPreimage'].setCustomValidity(e.message)
       console.error(e.message)
