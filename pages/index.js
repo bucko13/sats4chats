@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
-import {Button, Container, Row, Toast, ListGroup, Form, Col } from 'react-bootstrap';
+import {Button, Container, Row, Toast, ListGroup, Form, Col, Alert } from 'react-bootstrap';
 import axios from 'axios'
 import { requestProvider } from 'webln'
 import SHA256 from 'bcrypto/lib/sha256-browser'
@@ -13,6 +13,9 @@ const Home = () => {
   const [invoice, setInvoice] = useState({})
   const [preimage, setPreimage] = useState('')
   const [preimageIsValid, setPreimageValid] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [validated, setValidated] = useState(false);
+
   let webLn
 
   useEffect(() => {
@@ -25,6 +28,14 @@ const Home = () => {
     })()
   })
 
+  function clearState() {
+    setSuccess(true)
+    setInvoice({})
+    setPreimage('')
+    setPreimageValid(false)
+    setTimeout(() => setSuccess(false), 3000)
+  }
+
   async function onClick() {
     const { data } = await axios.get('/api/invoice')
     setInvoice(data)
@@ -35,10 +46,24 @@ const Home = () => {
     setPreimage(preimage)
   }
 
+  function onPreimageChange(e) {
+    setPreimageValid(false)
+    setValidated(false)
+    setPreimage(e.target.value)
+  }
+
   function validatePreimage(e) {
-    const { value } = e.target
-    if (!value || value.length === 0) return
-    setPreimage(value)
+    event.preventDefault();
+    event.stopPropagation();
+    const form = event.currentTarget;
+
+    const value = form['formPreimage'].value
+    if (!value || value.length === 0) {
+      form['formPreimage'].setCustomValidity('Preimage required')
+      setValidated(true)
+      return
+    }
+
     try {
       const encoding = getEncoding(value)
 
@@ -51,14 +76,21 @@ const Home = () => {
         }
       }
       const hash = SHA256.digest(Buffer.from(value, encoding)).toString('hex')
-      if (hash === paymentHash)
+      if (hash === paymentHash) {
+        form['formPreimage'].setCustomValidity('')
         setPreimageValid(true)
-      else 
+      } else {
+        form['formPreimage'].setCustomValidity('Invalid hash')
         setPreimageValid(false)
+      }
+      
+
     } catch (e) {
+      form['formPreimage'].setCustomValidity(e.message)
       console.error(e.message)
       setPreimageValid(false)
     }
+    setValidated(true)
   }
 
   return (
@@ -73,47 +105,58 @@ const Home = () => {
             crossOrigin="anonymous"
           />
         </Head>
-
-        <div className="hero">
-          <h1 className="title">Welcome to my Sats4Chats!</h1>
-          {preimageIsValid && (
-            <Row className="justify-content-center my-4">
-              <Col md="7">
-                <EmailForm {...invoice} />
-              </Col>
-            </Row>
-          )}
-          {Object.keys(invoice).length ? (
-            <React.Fragment>
+        <Container>
+          <div className="hero">
+            <h1 className="title">Welcome to my Sats4Chats!</h1>
+            {preimageIsValid && !!preimage.length && (
               <Row className="justify-content-center my-4">
-                <Col md="7">
-                  <Form>
-                    <Form.Control value={preimage} onChange={validatePreimage} isValid={preimageIsValid} isInvalid={!preimageIsValid}/>
-                    <Form.Control.Feedback type="invalid">
-                      Hash of preimage does not match payment id
-                    </Form.Control.Feedback>
-                  </Form>
+                <Col md="9">
+                  <EmailForm {...invoice} preimage={preimage} onSuccess={clearState}/>
                 </Col>
               </Row>
-              <Row className="justify-content-center">
-                <Col md="7">
-                  <Toast style={{ maxWidth: "100%" }}>
-                    <Toast.Header closeButton={false}>
-                      <strong className="mr-auto">Invoice</strong>
-                    </Toast.Header>
-                    <Toast.Body style={{ overflowWrap: 'break-word'}}>
-                      <ListGroup>
-                        <ListGroup.Item>ID: {invoice.id}</ListGroup.Item>
-                        <ListGroup.Item><p>Invoice: <a href="#" onClick={payInvoice}>{invoice.request}</a></p></ListGroup.Item>
-                        <ListGroup.Item>Amount: {invoice.amount} satoshis</ListGroup.Item>
-                      </ListGroup>
-                    </Toast.Body>
-                  </Toast>
-                </Col>
-              </Row>
-            </React.Fragment>
-            ) : (
+            )}
+            {!!Object.keys(invoice).length && (
+              <React.Fragment>
+                <Row className="justify-content-center my-4">
+                  <Col md="9">
+                    <Form onSubmit={validatePreimage} noValidate validated={validated}>
+                      <Form.Group controlId="formPreimage">
+                        <Form.Control value={preimage} onChange={onPreimageChange} required />
+                        <Form.Control.Feedback type="invalid">
+                          Hash of preimage does not match payment id
+                        </Form.Control.Feedback>
+                      </Form.Group>
+                      <Button variant="primary" type="submit">
+                        Check Preimage
+                      </Button>
+                    </Form>
+                  </Col>
+                </Row>
+                <Row className="justify-content-center">
+                  <Col md="9">
+                    <Toast style={{ maxWidth: "100%" }}>
+                      <Toast.Header closeButton={false}>
+                        <strong className="mr-auto">Invoice</strong>
+                      </Toast.Header>
+                      <Toast.Body style={{ overflowWrap: 'break-word'}}>
+                        <ListGroup>
+                          <ListGroup.Item>ID: {invoice.id}</ListGroup.Item>
+                          <ListGroup.Item><p>Invoice: <a href="#" onClick={payInvoice}>{invoice.request}</a></p></ListGroup.Item>
+                          <ListGroup.Item>Amount: {invoice.amount} satoshis</ListGroup.Item>
+                        </ListGroup>
+                      </Toast.Body>
+                    </Toast>
+                  </Col>
+                </Row>
+              </React.Fragment>
+            )}
             <React.Fragment>
+              {success && (
+                <Alert variant='success'>
+                  <Alert.Heading>Great Success!</Alert.Heading>
+                  Thanks so much for reaching out.
+                </Alert>
+               )}
               <p className="description">
                 Click below to send me an email.
               </p>
@@ -123,9 +166,8 @@ const Home = () => {
                 </Row>
               </Container>
             </React.Fragment>
-          )}
-        </div>
-
+          </div>
+        </Container>
         <style jsx>{`
           .hero {
             width: 100%;

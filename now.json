@@ -1,9 +1,10 @@
 {
   "env": {
-    "GMAIL_USER": "@gmail-user",
-    "GMAIL_PASS": "@gmail-pass",
+    "GMAIL_ADDRESS": "@gmail-user",
+    "GMAIL_APP_PASSWORD": "@gmail-pass",
     "LND_CERT": "@lnd-cert",
     "LND_MACAROON": "@lnd-macaroon",
-    "LND_SOCKET": "@lnd-socket"
+    "LND_SOCKET": "@lnd-socket",
+    "MIN_PAYMENT": "@min-payment"
   }
 }
