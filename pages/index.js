@@ -178,26 +178,28 @@ const Home = () => {
                     </Toast.Body>
                   </Toast>
                 </Col>
-                <Col md="9" className="mb-4">
+                <Col md="9" className="my-4">
                   <InfoCard />
                 </Col>
               </Row>
             </React.Fragment>
           )}
-          <React.Fragment>
-            {success && (
-              <Alert variant="success">
-                <Alert.Heading>Great Success!</Alert.Heading>
-                Thanks so much for reaching out.
-              </Alert>
-            )}
-            <p className="description">Click below to send me an email.</p>
-            <Container>
-              <Row className="justify-content-center">
-                <Button onClick={onClick}>Get Started</Button>
-              </Row>
-            </Container>
-          </React.Fragment>
+          {success && (
+            <Alert variant="success">
+              <Alert.Heading>Great Success!</Alert.Heading>
+              Thanks so much for reaching out.
+            </Alert>
+          )}
+          {(!invoice || Object.keys(invoice).length === 0) && (
+            <React.Fragment>
+              <p className="description">Click below to send me an email.</p>
+              <Container>
+                <Row className="justify-content-center">
+                  <Button onClick={onClick}>Get Started</Button>
+                </Row>
+              </Container>
+            </React.Fragment>
+          )}
         </div>
       </Container>
       <style jsx>{`
